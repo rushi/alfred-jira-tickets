@@ -1,0 +1,27 @@
+{
+    "name": "alfred-jira-tickets",
+    "version": "0.0.1",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Rushi Vishavadia <rushi.v@gmail.com>",
+    "license": "ISC",
+    "dependencies": {
+        "alfy": "^0.10.0",
+        "axios": "^0.21.1",
+        "dotenv": "^8.2.0",
+        "esm": "^3.2.25",
+        "jira-client": "^6.21.1",
+        "lodash": "^4.17.20",
+        "prettier": "^2.2.1",
+        "shelljs": "^0.8.4"
+    },
+    "prettier": {
+        "semi": true,
+        "printWidth": 120,
+        "trailingComma": "all",
+        "tabWidth": 4
+    }
+}
