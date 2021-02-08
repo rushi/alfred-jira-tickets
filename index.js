@@ -12,11 +12,11 @@ const dotenv = require("dotenv");
 dotenv.config({ path: path.dirname(fs.realpathSync(process.argv[1])) + "/.env" });
 
 const cacheKey = process.env.CACHE_KEY;
-const cacheAge = 120 * 1000; // 120 seconds to milliseconds
+const cacheAge = 1800 * 1000; // 120 seconds to milliseconds
 alfy.cache.path = process.env.CACHE_PATH;
 
 const lockfile = "/tmp/alfred.jira.lock";
-const isLocked = false; //shell.test("-f", lockfile); // Check if older than 1 hour?
+const isLocked = shell.test("-f", lockfile); // TODO: Check if older than 1 hour?
 const args = process.argv.slice(2);
 const forcedUpdate = args[0] && args[0] === "--update";
 
@@ -37,7 +37,7 @@ async function run() {
         }
     }
 
-    const input = alfy.input ? alfy.input : "/hours 96";
+    const input = alfy.input ? alfy.input : "/hours 24";
     let items = data.slice(0, 10);
     if (input === '/new') {
         items = data.slice(0, 10);
