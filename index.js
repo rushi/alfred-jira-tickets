@@ -3,8 +3,9 @@
 import _ from "lodash";
 import fs from "fs";
 import path from "path";
-import shell from "shelljs";
 import alfy from "alfy";
+import moment from 'moment';
+import shell from "shelljs";
 import { JIRA } from "./jira";
 
 const dotenv = require("dotenv");
@@ -36,9 +37,21 @@ async function run() {
         }
     }
 
-    const input = alfy.input ? alfy.input : "XOL-5";
-    const re = new RegExp(input.trim(), 'i');
-    let items = data.filter((d) => d.title.match(re));
+    const input = alfy.input ? alfy.input : "/hours 96";
+    let items = data.slice(0, 10);
+    if (input === '/new') {
+        items = data.slice(0, 10);
+    } else if (input.match(/\/hours (\d{1,3})/)) {
+        const hours = input.match(/\d{1,3}/)[0];
+        const limit = moment().subtract(hours, 'hours');
+        items = data.filter((d) => moment(d.createdAt).isAfter(limit));
+    } else if (input === '/critical') {
+        items = data.filter((d) => d.priority.match(/critical/i));
+    }
+    else {
+        const re = new RegExp(input.trim(), "i");
+        items = data.filter((d) => d.title.match(re));
+    }
 
     if (_.isEmpty(items)) {
         const searchPath = JIRA.getIssueUrl(input); // Manually look up on JIRA search
