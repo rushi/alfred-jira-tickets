@@ -1,7 +1,7 @@
-import _ from "lodash";
 import fs from "fs";
+import _ from "lodash";
 import path from "path";
-import moment from 'moment';
+import moment from "moment";
 import JiraApi from "jira-client";
 
 const dotenv = require("dotenv");
@@ -16,20 +16,12 @@ const config = {
 };
 const jira = new JiraApi(config);
 
-const issueFields = [
-    "summary",
-    "status",
-    "assignee",
-    "issuetype",
-    "priority",
-    "reporter",
-    "fixVersions",
-    "created"
-];
+const issueFields = ["summary", "status", "assignee", "issuetype", "priority", "reporter", "fixVersions", "created"];
 
 export const JIRA = {
     async findAllTickets(limit = 99999) {
-        const jql = `status != Closed and status != Done and project in (CS,XOL,DR) ORDER by createdDate DESC`;
+        const projectList = process.env.PROJECT_LIST;
+        const jql = `status != Closed and status != Done and project in (${projectList}) ORDER by createdDate DESC`;
         const response = await this.searchByJQL(jql, 0, limit);
         let formattedTickets = response.issues.map((issue) => {
             const fields = issue.fields;
@@ -37,10 +29,10 @@ export const JIRA = {
             const title = `${type} ${issue.key} - ${fields.summary}`;
             const status = fields.status ? fields.status.name : "Status N/A";
             const priority = fields.priority ? fields.priority.name : "Priority N/A";
-            const createdAt = moment(fields.created).format("Do MMM, YYYY HH:mm" );
+            const createdAt = moment(fields.created).format("Do MMM, YYYY HH:mm");
             const subtitle = `${status} 🔹 ${priority} by ${fields.reporter.displayName} on ${createdAt}`;
 
-            // TODO: Add createdAt so I can easily do hour math
+            const isTask = type === "task";
             return {
                 title,
                 subtitle,
@@ -48,7 +40,7 @@ export const JIRA = {
                 createdAt: fields.created,
                 arg: this.getIssueUrl(issue.key),
                 icon: {
-                    path: type === "Bug" ? "./bug.png" : type === "Task" ? "./task.png" : "./story.png",
+                    path: type === "Bug" ? "./images/bug.png" : isTask ? "./images/task.png" : "./images/story.png",
                 },
             };
         });
