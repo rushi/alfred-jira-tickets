@@ -24,11 +24,7 @@ const issueFields = [
     "priority",
     "reporter",
     "fixVersions",
-    "created",
-    "customfield_12100", // Deployment notes TODO: Check for CS tickets, same field?
-    "customfield_10002", // Flagged TODO: Check for CS tickets, same field?
-    "customfield_12239", // Expected staging release date
-    "customfield_12240", // Expected production release date
+    "created"
 ];
 
 export const JIRA = {
