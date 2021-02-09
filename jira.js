@@ -29,18 +29,23 @@ export const JIRA = {
             const title = `${type} ${issue.key} - ${fields.summary}`;
             const status = fields.status ? fields.status.name : "Status N/A";
             const priority = fields.priority ? fields.priority.name : "Priority N/A";
+            const assignee = fields.assignee ? fields.assignee.displayName : 'N/A';
             const createdAt = moment(fields.created).format("Do MMM, YYYY HH:mm");
             const subtitle = `${status} 🔹 ${priority} by ${fields.reporter.displayName} on ${createdAt}`;
 
-            const isTask = type === "task";
+            const isStoryLike = type === "Story" || type === "Improvement";
+            const modSubtitle = `Created ${moment(fields.created).fromNow()} - Assigned to: ${assignee}`;
             return {
+                uid: issue.key,
                 title,
                 subtitle,
                 priority,
                 createdAt: fields.created,
                 arg: this.getIssueUrl(issue.key),
+                text: { copy: this.getIssueUrl(issue.key), largetype: title },
+                mods: { alt: { subtitle: modSubtitle }, cmd: { subtitle: modSubtitle } },
                 icon: {
-                    path: type === "Bug" ? "./images/bug.png" : isTask ? "./images/task.png" : "./images/story.png",
+                    path: type === "Bug" ? "images/bug.png" : isStoryLike ? "images/story.png" : "images/task.png",
                 },
             };
         });

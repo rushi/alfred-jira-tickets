@@ -4,7 +4,8 @@ import _ from "lodash";
 import fs from "fs";
 import path from "path";
 import alfy from "alfy";
-import moment from 'moment';
+import moment from "moment";
+import {ray} from 'node-ray';
 import shell from "shelljs";
 import { JIRA } from "./jira";
 
@@ -38,17 +39,20 @@ async function run() {
     }
 
     const input = alfy.input ? alfy.input : "/hours 24";
-    let items = data.slice(0, 10);
-    if (input === '/new') {
-        items = data.slice(0, 10);
+    let items = [];
+    if (input.match(/\/new( \d{1,3})?/)) {
+        const matches = input.match(/\d{1,3}/);
+        const max = matches ? matches[0] : 10;
+        items = data.slice(0, max);
     } else if (input.match(/\/hours (\d{1,3})/)) {
         const hours = input.match(/\d{1,3}/)[0];
-        const limit = moment().subtract(hours, 'hours');
+        const limit = moment().subtract(hours, "hours");
         items = data.filter((d) => moment(d.createdAt).isAfter(limit));
-    } else if (input === '/critical') {
+    } else if (input === "/critical") {
         items = data.filter((d) => d.priority.match(/critical/i));
-    }
-    else {
+    } else if (input === "/rtd") {
+        items = data.filter((d) => d.subtitle.match(/ready to/i));
+    } else {
         const re = new RegExp(input.trim(), "i");
         items = data.filter((d) => d.title.match(re));
     }
@@ -83,7 +87,7 @@ async function cacheData() {
         results = await JIRA.findAllTickets();
         alfy.cache.set(cacheKey, results, { maxAge: cacheAge });
         console.log(results.length + " tickets cached in " + alfy.cache.path);
-        console.log(results[0], results[results.length -1]);
+        console.log(results[0], results[results.length - 1]);
     } catch (err) {
         console.log("Error getting tickets");
         console.log(err);

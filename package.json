@@ -24,5 +24,8 @@
         "printWidth": 120,
         "trailingComma": "all",
         "tabWidth": 4
+    },
+    "devDependencies": {
+        "node-ray": "^1.4.4"
     }
 }
