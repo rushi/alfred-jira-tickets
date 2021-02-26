@@ -17,16 +17,32 @@ const cacheAge = 1800 * 1000; // 120 seconds to milliseconds
 alfy.cache.path = process.env.CACHE_PATH;
 
 const lockfile = "/tmp/alfred.jira.lock";
-const isLocked = shell.test("-f", lockfile); // TODO: Check if older than 1 hour?
 const args = process.argv.slice(2);
 const forcedUpdate = args[0] && args[0] === "--update";
+
+async function isLocked() {
+    const fileExists = shell.test("-f", lockfile);
+    if (!fileExists) {
+        return false;
+    }
+
+    const fd = await fs.openSync(lockfile);
+    const stats = await fs.fstatSync(fd);
+    const diffSeconds = moment().unix() - stats.birthtimeMs / 1000;
+    fs.close(fd);
+
+    const staleLockFile = diffSeconds < 3600;
+    shell.rm(lockfile);
+
+    return staleLockFile;
+}
 
 async function run() {
     let data = alfy.cache.get(cacheKey, { ignoreMaxAge: true });
     if (_.isEmpty(data) || forcedUpdate) {
         // No data in the store, must cache
 
-        if (isLocked) {
+        if (await isLocked()) {
             // Lockfile exists, not updating
             return output("Caching in progress", `Try '${alfy.input}' again in a few`);
         } else if (forcedUpdate) {
@@ -39,6 +55,7 @@ async function run() {
     }
 
     const input = alfy.input ? alfy.input : "/hours 24";
+    ray(`Start with ${input}`);
     let items = [];
     if (input.match(/\/new( \d{1,3})?/)) {
         const matches = input.match(/\d{1,3}/);
