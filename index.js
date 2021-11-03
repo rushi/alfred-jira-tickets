@@ -1,15 +1,13 @@
-#!/usr/bin/env node
-
-import _ from "lodash";
-import fs from "fs";
-import path from "path";
 import alfy from "alfy";
+import { spawn } from "child_process";
+import dotenv from "dotenv";
+import fs from "fs";
+import _ from "lodash";
 import moment from "moment";
-import {ray} from 'node-ray';
+import path from "path";
 import shell from "shelljs";
-import { JIRA } from "./jira";
+import { JIRA } from "./jira.js";
 
-const dotenv = require("dotenv");
 dotenv.config({ path: path.dirname(fs.realpathSync(process.argv[1])) + "/.env" });
 
 const cacheKey = process.env.CACHE_KEY;
@@ -38,6 +36,7 @@ async function isLocked() {
 }
 
 async function run() {
+    const input = alfy.input; // alfy.input ? alfy.input : "/hours 24";
     let data = alfy.cache.get(cacheKey, { ignoreMaxAge: true });
     if (_.isEmpty(data) || forcedUpdate) {
         // No data in the store, must cache
@@ -54,8 +53,6 @@ async function run() {
         }
     }
 
-    const input = alfy.input ? alfy.input : "/hours 24";
-    ray(`Start with ${input}`);
     let items = [];
     if (input.match(/\/new( \d{1,3})?/)) {
         const matches = input.match(/\d{1,3}/);
@@ -70,6 +67,7 @@ async function run() {
     } else if (input === "/rtd") {
         items = data.filter((d) => d.subtitle.match(/ready to/i));
     } else {
+        // If format is \w+\-\d{1,} then just look at titles?? Speed??
         const re = new RegExp(input.trim(), "i");
         items = data.filter((d) => d.title.match(re));
     }
@@ -80,11 +78,10 @@ async function run() {
     }
 
     alfy.output(items);
-    initCacheData();
+    // initCacheData();
 }
 
 function initCacheData() {
-    var spawn = require("child_process").spawn;
     spawn("node", ["index.js", "--update"], {
         stdio: "ignore",
         detached: true,

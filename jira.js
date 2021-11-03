@@ -1,10 +1,10 @@
 import fs from "fs";
-import _ from "lodash";
-import path from "path";
-import moment from "moment";
 import JiraApi from "jira-client";
+import _ from "lodash";
+import moment from "moment";
+import path from "path";
+import dotenv from "dotenv";
 
-const dotenv = require("dotenv");
 dotenv.config({ path: path.dirname(fs.realpathSync(process.argv[1])) + "/.env" });
 
 const config = {
@@ -29,7 +29,7 @@ export const JIRA = {
             const title = `${type} ${issue.key} - ${fields.summary}`;
             const status = fields.status ? fields.status.name : "Status N/A";
             const priority = fields.priority ? fields.priority.name : "Priority N/A";
-            const assignee = fields.assignee ? fields.assignee.displayName : 'N/A';
+            const assignee = fields.assignee ? fields.assignee.displayName : "N/A";
             const createdAt = moment(fields.created).format("Do MMM, YYYY HH:mm");
             const subtitle = `${status} 🔹 ${priority} by ${fields.reporter.displayName} on ${createdAt}`;
 
