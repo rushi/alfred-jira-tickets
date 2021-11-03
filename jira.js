@@ -30,7 +30,7 @@ export const JIRA = {
             const status = fields.status ? fields.status.name : "Status N/A";
             const priority = fields.priority ? fields.priority.name : "Priority N/A";
             const assignee = fields.assignee ? fields.assignee.displayName : "N/A";
-            const createdAt = moment(fields.created).format("Do MMM, YYYY HH:mm");
+            const createdAt = moment(fields.created).format("Do MMM YYYY HH:mm");
             const subtitle = `${status} 🔹 ${priority} by ${fields.reporter.displayName} on ${createdAt}`;
 
             const isStoryLike = type === "Story" || type === "Improvement";
@@ -45,7 +45,7 @@ export const JIRA = {
                 text: { copy: this.getIssueUrl(issue.key), largetype: title },
                 mods: { alt: { subtitle: modSubtitle }, cmd: { subtitle: modSubtitle } },
                 icon: {
-                    path: type === "Bug" ? "images/bug.png" : isStoryLike ? "images/story.png" : "images/task.png",
+                    path: type.match(/bug/i) ? "images/bug.png" : isStoryLike ? "images/story.png" : "images/task.png",
                 },
             };
         });

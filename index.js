@@ -36,7 +36,6 @@ async function isLocked() {
 }
 
 async function run() {
-    const input = alfy.input; // alfy.input ? alfy.input : "/hours 24";
     let data = alfy.cache.get(cacheKey, { ignoreMaxAge: true });
     if (_.isEmpty(data) || forcedUpdate) {
         // No data in the store, must cache
@@ -54,6 +53,7 @@ async function run() {
     }
 
     let items = [];
+    const input = alfy.input ?? "/hours 24";
     if (input.match(/\/new( \d{1,3})?/)) {
         const matches = input.match(/\d{1,3}/);
         const max = matches ? matches[0] : 10;
