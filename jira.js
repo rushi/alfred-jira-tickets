@@ -21,7 +21,8 @@ const issueFields = ["summary", "status", "assignee", "issuetype", "priority", "
 export const JIRA = {
     async findAllTickets(limit = 99999) {
         const projectList = process.env.PROJECT_LIST;
-        const jql = `status != Closed and status != Done and project in (${projectList}) ORDER by createdDate DESC`;
+        const jql = `project in (${projectList}) AND updatedDate >= -10d ORDER by createdDate DESC`;
+        console.log("JQL", jql);
         const response = await this.searchByJQL(jql, 0, limit);
         let formattedTickets = response.issues.map((issue) => {
             const fields = issue.fields;
