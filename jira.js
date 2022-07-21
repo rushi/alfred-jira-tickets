@@ -5,7 +5,7 @@ import moment from "moment";
 import path from "path";
 import dotenv from "dotenv";
 
-dotenv.config({ path: path.dirname(fs.realpathSync(process.argv[1])) + "/.env" });
+dotenv.config({ path: `${path.dirname(fs.realpathSync(process.argv[1]))}/.env` });
 
 const config = {
     protocol: "https",
@@ -19,12 +19,12 @@ const jira = new JiraApi(config);
 const issueFields = ["summary", "status", "assignee", "issuetype", "priority", "reporter", "fixVersions", "created"];
 
 export const JIRA = {
-    async findAllTickets(limit = 99999) {
+    async findAllTickets(limit = 99_999) {
         const projectList = process.env.PROJECT_LIST;
-        const jql = `project in (${projectList}) AND updatedDate >= -10d ORDER by createdDate DESC`;
+        const jql = `project in (${projectList}) AND updatedDate >= -60d ORDER by createdDate DESC`;
         console.log("JQL", jql);
         const response = await this.searchByJQL(jql, 0, limit);
-        let formattedTickets = response.issues.map((issue) => {
+        const formattedTickets = response.issues.map((issue) => {
             const fields = issue.fields;
             const type = fields.issuetype.name;
             const title = `${type} ${issue.key} - ${fields.summary}`;
@@ -56,7 +56,7 @@ export const JIRA = {
 
     async searchByJQL(jql, startAt = 0, maxResults = 999, expand = []) {
         expand = _.isArray(expand) ? expand : [expand];
-        let results = await jira.searchJira(jql, { startAt, expand, fields: issueFields, maxResults });
+        const results = await jira.searchJira(jql, { startAt, expand, fields: issueFields, maxResults });
         if (results.startAt + results.maxResults < results.total && startAt < maxResults) {
             const response = await this.searchByJQL(jql, startAt + 100, maxResults, expand);
             results.issues = results.issues.concat(response.issues);

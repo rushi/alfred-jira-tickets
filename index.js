@@ -7,8 +7,9 @@ import moment from "moment";
 import path from "path";
 import shell from "shelljs";
 import { JIRA } from "./jira.js";
+import Fuse from "fuse.js";
 
-dotenv.config({ path: path.dirname(fs.realpathSync(process.argv[1])) + "/.env" });
+dotenv.config({ path: `${path.dirname(fs.realpathSync(process.argv[1]))}/.env` });
 
 const cacheKey = process.env.CACHE_KEY;
 const cacheAge = 1800 * 1000; // 120 seconds to milliseconds
@@ -36,7 +37,7 @@ async function isLocked() {
 }
 
 async function run() {
-    let data = alfy.cache.get(cacheKey, { ignoreMaxAge: true });
+    const data = alfy.cache.get(cacheKey, { ignoreMaxAge: true });
     if (_.isEmpty(data) || forcedUpdate) {
         // No data in the store, must cache
 
@@ -55,21 +56,26 @@ async function run() {
     let items = [];
     const input = alfy.input ?? "/hours 24";
     if (input.match(/\/new( \d{1,3})?/)) {
+        // Show "/new <num>" to show the latest <num> tickets
         const matches = input.match(/\d{1,3}/);
         const max = matches ? matches[0] : 10;
         items = data.slice(0, max);
     } else if (input.match(/\/hours (\d{1,3})/)) {
+        // Show "/hours <num>" to show tickets created in last <num> hours
         const hours = input.match(/\d{1,3}/)[0];
         const limit = moment().subtract(hours, "hours");
         items = data.filter((d) => moment(d.createdAt).isAfter(limit));
     } else if (input === "/critical") {
         items = data.filter((d) => d.priority.match(/critical/i));
     } else if (input === "/rtd") {
-        items = data.filter((d) => d.subtitle.match(/ready to/i));
+        items = data.filter((d) => d.subtitle.match(/ready to|done/i));
     } else {
-        // If format is \w+\-\d{1,} then just look at titles?? Speed??
-        const re = new RegExp(input.trim(), "i");
-        items = data.filter((d) => d.title.match(re));
+        const fuse = new Fuse(data, { includeScore: true, keys: ["title"] });
+        const result = fuse.search(input);
+        items = result.map((r) => {
+            r.item.title += ` (${_.round(r.score, 2)})`;
+            return r.item;
+        });
     }
 
     if (_.isEmpty(items)) {
@@ -77,7 +83,7 @@ async function run() {
         items = [{ title: `No tickets found for '${input}'`, subtitle: `Search for ${input}`, arg: searchPath }];
     }
 
-    alfy.output(items);
+    alfy.output(items, { rerunInterval: 5 });
     // initCacheData();
 }
 
