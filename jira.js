@@ -18,6 +18,20 @@ const jira = new JiraApi(config);
 
 const issueFields = ["summary", "status", "assignee", "issuetype", "priority", "reporter", "fixVersions", "created"];
 
+const getStatus = (status) => {
+    const name = status ? status.name : "Status N/A";
+    if (name.match(/in progress/i)) {
+        return `⏳ ${name}`;
+    }
+    if (name.match(/ready to deploy|done/i)) {
+        return `✅ ${name}`;
+    }
+    if (name.match(/closed/i)) {
+        return `🏁 ${name}`;
+    }
+    return name;
+};
+
 export const JIRA = {
     async findAllTickets(limit = 99_999) {
         const projectList = process.env.PROJECT_LIST;
@@ -28,7 +42,7 @@ export const JIRA = {
             const fields = issue.fields;
             const type = fields.issuetype.name;
             const title = `${type} ${issue.key} - ${fields.summary}`;
-            const status = fields.status ? fields.status.name : "Status N/A";
+            const status = getStatus(fields.status);
             const priority = fields.priority ? fields.priority.name : "Priority N/A";
             const assignee = fields.assignee ? fields.assignee.displayName : "N/A";
             const createdAt = moment(fields.created).format("Do MMM YYYY HH:mm");

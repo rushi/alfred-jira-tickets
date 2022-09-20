@@ -1,13 +1,16 @@
 import alfy from "alfy";
 import { spawn } from "child_process";
+import consola from "consola";
 import dotenv from "dotenv";
 import fs from "fs";
+import Fuse from "fuse.js";
 import _ from "lodash";
 import moment from "moment";
 import path from "path";
 import shell from "shelljs";
 import { JIRA } from "./jira.js";
-import Fuse from "fuse.js";
+
+consola.wrapConsole();
 
 dotenv.config({ path: `${path.dirname(fs.realpathSync(process.argv[1]))}/.env` });
 
@@ -70,12 +73,32 @@ async function run() {
     } else if (input === "/rtd") {
         items = data.filter((d) => d.subtitle.match(/ready to|done/i));
     } else {
-        const fuse = new Fuse(data, { includeScore: true, keys: ["title"] });
+        const options = { includeScore: true, keys: ["uid", "title"], minMatchCharLength: 4 };
+        const fuse = new Fuse(data, options);
         const result = fuse.search(input);
-        items = result.map((r) => {
-            r.item.title += ` (${_.round(r.score, 2)})`;
-            return r.item;
-        });
+        let hasExactMatch = false;
+        let lowestScore = 1;
+        items = result
+            .map((r) => {
+                r.item.score = _.round(r.score, 2);
+                r.item.subtitle += ` Score: ${r.item.score}`;
+                if (r.item.score < lowestScore) {
+                    lowestScore = r.item.score;
+                }
+                if (r.item.uid === input) {
+                    hasExactMatch = true;
+                }
+                return r.item;
+            })
+            .slice(0, 5);
+        if (!hasExactMatch) {
+            items.unshift({
+                title: `Open ${input} in browser`,
+                subtitle: `Issue not found`,
+                arg: `https://xola01.atlassian.net/browse/${input}`,
+                icon: { path: "icons/browser.png" },
+            });
+        }
     }
 
     if (_.isEmpty(items)) {
@@ -83,6 +106,7 @@ async function run() {
         items = [{ title: `No tickets found for '${input}'`, subtitle: `Search for ${input}`, arg: searchPath }];
     }
 
+    // console.log(items);
     alfy.output(items, { rerunInterval: 5 });
     // initCacheData();
 }
@@ -106,7 +130,7 @@ async function cacheData() {
     try {
         results = await JIRA.findAllTickets();
         alfy.cache.set(cacheKey, results, { maxAge: cacheAge });
-        console.log(results.length + " tickets cached in " + alfy.cache.path);
+        console.log(`${results.length} tickets cached in ${alfy.cache.path}`);
         console.log(results[0], results[results.length - 1]);
     } catch (err) {
         console.log("Error getting tickets");
